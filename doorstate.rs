@@ -1,4 +1,5 @@
 extern crate curl;
+extern crate crypto_hash;
 
 #[cfg(feature = "pi")]
 extern crate wiringpi;
@@ -7,11 +8,12 @@ use std::path::Path;
 use std::fs::File;
 use std::error::Error;
 use std::io::prelude::*;
-use std::io::stdout;
 use std::{thread, time};
 use std::str;
 
 use curl::easy::Easy;
+
+use crypto_hash::{Algorithm, hex_digest};
 
 static CONFIG_FILE_NAME: &'static str = "doorstate.config";
 
@@ -85,11 +87,11 @@ fn config() -> (API, GPIO)
 fn read_doorstate() {
 }
 
-fn send_doorstate(url: String, data: String) {
+fn send_doorstate(baseurl: String, pre_shared_key: String, status: String) {
     let mut easy = Easy::new();
     let mut dst = Vec::new();
 
-    easy.url(&url).unwrap();
+    easy.url(&baseurl).unwrap();
 
     // This scope is required to end the borrow of dst
     {
@@ -101,10 +103,24 @@ fn send_doorstate(url: String, data: String) {
         transfer.perform().unwrap();
     }
 
-    let mut clone = &dst.clone();
-    let challenge = str::from_utf8(&clone).unwrap();
+    let challenge = str::from_utf8(&dst).unwrap();
+    let mut response = dst.to_vec();
 
-    println!("{}", challenge);
+    response.extend_from_slice(pre_shared_key.as_bytes());
+
+    let response_hashed = hex_digest(Algorithm::SHA256, response);
+    let url: String = baseurl + "?" +
+        "challenge=" + challenge + "&" +
+        "response=" + &response_hashed + "&" +
+        "status=" + &status;
+
+    println!("{}", url);
+
+    easy.url(&url).unwrap();
+
+    let transfer = easy.transfer();
+
+    transfer.perform().unwrap();
 }
 
 #[cfg(feature = "pi")]
@@ -131,7 +147,7 @@ fn main() {
         duration = time::Duration::from_millis(0);
     }
 
-    send_doorstate(api.url, "".to_string());
+    send_doorstate(api.url, api.pre_shared_key, "offen".to_string());
 
     /*
     loop {
