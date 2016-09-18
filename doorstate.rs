@@ -84,10 +84,22 @@ fn config() -> (API, GPIO)
 }
 
 #[cfg(feature = "pi")]
-fn read_doorstate() {
+fn read_doorstate(pin: InputPin) -> String {
+    let mut status: String  = "geschlossen";
+
+    if pin.digital_read() == wiringpi::pin::Value::Low {
+        status = "offen";
+    }
+
+    return status
 }
 
-fn send_doorstate(baseurl: String, pre_shared_key: String, status: String) {
+#[allow(unused_variables)]
+fn read_doorstate(pin: ()) -> String {
+    return "offen".to_string();
+}
+
+fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) {
     let mut easy = Easy::new();
     let mut dst = Vec::new();
 
@@ -109,12 +121,18 @@ fn send_doorstate(baseurl: String, pre_shared_key: String, status: String) {
     response.extend_from_slice(pre_shared_key.as_bytes());
 
     let response_hashed = hex_digest(Algorithm::SHA256, response);
-    let url: String = baseurl + "?" +
-        "challenge=" + challenge + "&" +
-        "response=" + &response_hashed + "&" +
-        "status=" + &status;
+    let mut url: String = String::new();
 
-    println!("{}", url);
+    url.push_str(baseurl);
+    url.push_str("?");
+    url.push_str("challenge=");
+    url.push_str(challenge);
+    url.push_str("&");
+    url.push_str("response=");
+    url.push_str(&response_hashed);
+    url.push_str("&");
+    url.push_str("status=");
+    url.push_str(status);
 
     easy.url(&url).unwrap();
 
@@ -124,11 +142,11 @@ fn send_doorstate(baseurl: String, pre_shared_key: String, status: String) {
 }
 
 #[cfg(feature = "pi")]
-fn setup_gpio(pin: i8) -> WiringPi {
+fn setup_gpio(pin: i8) -> InputPin {
     let pi = wiringpi::setup();
     let pin = pi.input_pin(pin);
 
-    pi
+    return pin
 }
 
 #[allow(unused_variables)]
@@ -138,8 +156,9 @@ fn setup_gpio(pin: i8) {
 fn main() {
     let (api, gpio) = config();
     let duration;
+    let mut status_last: String = "".to_string();
 
-    let pi = setup_gpio(gpio.pin);
+    let pin = setup_gpio(gpio.pin);
 
     if api.rate_ms > -1 {
         duration = time::Duration::from_millis(api.rate_ms as u64);
@@ -147,19 +166,17 @@ fn main() {
         duration = time::Duration::from_millis(0);
     }
 
-    send_doorstate(api.url, api.pre_shared_key, "offen".to_string());
-
-    /*
     loop {
-        println!("Test");
+        let status_new = read_doorstate(pin);
 
-        if pi != () {
-            println!("pi is not equal to unit type");
+        if status_new != status_last {
+            send_doorstate(&api.url, &api.pre_shared_key, &status_new);
+
+            status_last = status_new;
         }
 
         if duration > time::Duration::from_millis(0) {
             thread::sleep(duration);
         }
     }
-    */
 }
