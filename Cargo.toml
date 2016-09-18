@@ -1,0 +1,19 @@
+[package]
+name = "doorstate"
+version = "0.1.0"
+authors = ["Martin Müller <mail@mueller-martin.net>"]
+
+[features]
+pi = ["wiringpi"]
+
+[dependencies]
+curl = "0.3.6"
+crypto-hash = "0.1.0"
+
+[dependencies.wiringpi]
+version = "0.1"
+optional = true
+
+[[bin]]
+name = "doorstate"
+path = "doorstate.rs"

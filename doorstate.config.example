@@ -1,0 +1,4 @@
+api.url = http://localhost/~martin/doorstate/setdoorstate.php
+api.pre-shared-key = test123
+api.rate-ms = 2000
+gpio.pin = 3
