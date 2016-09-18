@@ -90,16 +90,21 @@ fn send_doorstate(url: String, data: String) {
     let mut dst = Vec::new();
 
     easy.url(&url).unwrap();
-    let mut transfer = easy.transfer();
-    transfer.write_function(|data| {
-        dst.extend_from_slice(data);
-        Ok(data.len())
-    }).unwrap();
-    transfer.perform().unwrap();
-    let mut clone = &dst.clone();
-    let result = str::from_utf8(&clone).unwrap();
 
-    println!("{}", result);
+    // This scope is required to end the borrow of dst
+    {
+        let mut transfer = easy.transfer();
+        transfer.write_function(|data| {
+            dst.extend_from_slice(data);
+            Ok(data.len())
+        }).unwrap();
+        transfer.perform().unwrap();
+    }
+
+    let mut clone = &dst.clone();
+    let challenge = str::from_utf8(&clone).unwrap();
+
+    println!("{}", challenge);
 }
 
 #[cfg(feature = "pi")]
