@@ -15,6 +15,9 @@ use curl::easy::Easy;
 
 use crypto_hash::{Algorithm, hex_digest};
 
+#[cfg(feature = "pi")]
+use wiringpi::pin::{WiringPi, InputPin};
+
 static CONFIG_FILE_NAME: &'static str = "doorstate.config";
 
 struct API {
@@ -84,18 +87,19 @@ fn config() -> (API, GPIO)
 }
 
 #[cfg(feature = "pi")]
-fn read_doorstate(pin: InputPin) -> String {
-    let mut status: String  = "geschlossen";
+fn read_doorstate(pin: &InputPin<WiringPi>) -> String {
+    let mut status: String  = "geschlossen".to_string();
 
     if pin.digital_read() == wiringpi::pin::Value::Low {
-        status = "offen";
+        status = "offen".to_string();
     }
 
-    return status
+    return status;
 }
 
+#[cfg(not(feature = "pi"))]
 #[allow(unused_variables)]
-fn read_doorstate(pin: ()) -> String {
+fn read_doorstate(pin: &()) -> String {
     return "offen".to_string();
 }
 
@@ -142,13 +146,14 @@ fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) {
 }
 
 #[cfg(feature = "pi")]
-fn setup_gpio(pin: i8) -> InputPin {
+fn setup_gpio(pin_no: i8) -> InputPin<WiringPi> {
     let pi = wiringpi::setup();
-    let pin = pi.input_pin(pin);
+    let pin = pi.input_pin(pin_no as u16);
 
-    return pin
+    pin
 }
 
+#[cfg(not(feature = "pi"))]
 #[allow(unused_variables)]
 fn setup_gpio(pin: i8) {
 }
@@ -167,7 +172,7 @@ fn main() {
     }
 
     loop {
-        let status_new = read_doorstate(pin);
+        let status_new = read_doorstate(&pin);
 
         if status_new != status_last {
             send_doorstate(&api.url, &api.pre_shared_key, &status_new);
