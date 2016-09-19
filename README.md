@@ -13,6 +13,14 @@ Requirements
 - [Rust](https://www.rust-lang.org/)
 - [Cargo](https://crates.io/)
 
+#### Raspbian
+
+`apt-get install build-essential libssl-dev`
+`wget https://static.rust-lang.org/dist/rust-1.11.0-arm-unknown-linux-gnueabi.tar.gz`
+`tar xvf rust-1.11.0-arm-unknown-linux-gnueabihf.tar.gz`
+`cd rust-1.11.0-arm-unknown-linux-gnueabihf`
+`./install.sh`
+
 #### Mac OS X (Homebrew)
 
 `brew install rust`
@@ -24,3 +32,11 @@ Requirements
 ### Server
 
 - [PHP](https://secure.php.net/)
+
+## Installation
+
+### Client
+
+`cd client`
+`cargo build --release --features pi`
+`cp target/release/doorstate .`
