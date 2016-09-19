@@ -18,7 +18,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Update door state from GPIO"
 NAME=doorstate
-DAEMON=/root/doorstate/$NAME
+DAEMON=/root/doorstate/client/$NAME
 DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
