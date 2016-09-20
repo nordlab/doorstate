@@ -52,7 +52,7 @@ function updateStatus($status)
 	// No fucking clue why this is necessary
 	global $config;
 
-	$handle = fopen($config['statusFile'], 'r+');
+	$handle = fopen($config['statusFile'], 'w+');
 
 	if ($status === 'geschlossen')
 		fwrite($handle, 'geschlossen');
