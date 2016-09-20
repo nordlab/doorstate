@@ -12,10 +12,11 @@ Requirements
 
 - [Rust](https://www.rust-lang.org/)
 - [Cargo](https://crates.io/)
+- [WiringPi](http://wiringpi.com/)
 
 #### Raspbian
 
-`apt-get install build-essential libssl-dev`
+`apt-get install build-essential libssl-dev wiringpi`
 `wget https://static.rust-lang.org/dist/rust-1.11.0-arm-unknown-linux-gnueabi.tar.gz`
 `tar xvf rust-1.11.0-arm-unknown-linux-gnueabihf.tar.gz`
 `cd rust-1.11.0-arm-unknown-linux-gnueabihf`
