@@ -14,11 +14,11 @@ Requirements
 
 #### Raspbian
 
-`apt-get install build-essential libssl-dev wiringpi`
-`wget https://static.rust-lang.org/dist/rust-1.11.0-arm-unknown-linux-gnueabi.tar.gz`
-`tar xvf rust-1.11.0-arm-unknown-linux-gnueabihf.tar.gz`
-`cd rust-1.11.0-arm-unknown-linux-gnueabihf`
-`./install.sh`
+	apt-get install build-essential libssl-dev wiringpi
+	wget https://static.rust-lang.org/dist/rust-1.11.0-arm-unknown-linux-gnueabi.tar.gz
+	tar xvf rust-1.11.0-arm-unknown-linux-gnueabihf.tar.gz
+	cd rust-1.11.0-arm-unknown-linux-gnueabihf
+	./install.sh
 
 #### Mac OS X (Homebrew)
 
@@ -30,12 +30,12 @@ Requirements
 
 ### Server
 
-- [PHP](https://secure.php.net/)
+- [PHP](https://secure.php.net/) 5.2+
 
 ## Installation
 
 ### Client
 
-`cd client`
-`cargo build --release --features pi`
-`cp target/release/doorstate .`
+	cd client
+	cargo build --release --features pi
+	cp target/release/doorstate .
