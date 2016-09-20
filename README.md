@@ -1,9 +1,7 @@
 Doorstate
 =========
 
-Complete rewrite of doorstate in [Rust](https://www.rust-lang.org/).
-
-Currently WIP.
+Complete rewrite of [CCRX/doorstate](https://github.com/CCRRX/doorstate) in [Rust](https://www.rust-lang.org/).
 
 Requirements
 ------------
