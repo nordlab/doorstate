@@ -1,25 +1,18 @@
 <?php
 require_once 'config.inc.php';
 
-// Credits:
-// http://stackoverflow.com/a/14735386/1532986
-// https://github.com/sarciszewski/oauth2-server/blob/7a63f42462ca098a5933f3e24b50cbf7964f1e41/src/Util/KeyAlgorithm/DefaultAlgorithm.php
-function random($len = 40, $strong = true)
+function random($len = 40)
 {
-	$stripped = '';
+	$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+	$result = '';
 
-	do
+	for ($i = 0; $i < $len; $i++)
 	{
-		$bytes = openssl_random_pseudo_bytes($len, $strong);
+		// Pick random ASCII char between and including 33-126
+		$result .= $chars[rand(0, strlen($chars) - 1)];
+	}
 
-		// We want to stop execution if the key fails because, well, that is bad.
-		if ($bytes === false || $strong === false)
-			throw new \Exception('Error generating key');
-
-		$stripped .= str_replace(['/', '+', '='], '', base64_encode($bytes));
-	} while (strlen($stripped) < $len);
-
-	return $stripped;
+	return $result;
 }
 
 // Iterate over challenges in file while having open a copy for changes
@@ -32,13 +25,13 @@ function challenges($func)
 		touch($config['challengeDB']);
 
 	$handleOrig = fopen($config['challengeDB'], 'r');
-	$challengeDBTmp = $config['challengeDB'] . random(5, false);
+	$challengeDBTmp = $config['challengeDB'] . random(5);
 	$handleTemp = fopen($challengeDBTmp, 'a+');
 
 	if ($handleOrig && $handleTemp)
 	{
 		while (($line = fgets($handleOrig)) !== false) {
-			call_user_func_array($func, array($handleOrig, $handleTemp, $line));
+			$func($handleOrig, $handleTemp, $line);
 		}
 
 		fclose($handleOrig);
@@ -62,15 +55,40 @@ function updateStatus($status)
 	fclose($handle);
 }
 
-// Remove challenges older than 60 seconds
-challenges(function($orig, $new, $line) {
-	$timestamp = intval(explode(" ", $line)[0]);
+function removeOldChallenges($orig, $new, $line)
+{
+	$tokens = explode(" ", $line);
+	$timestamp = intval($tokens[0]);
 
 	if (time() - $timestamp < 60)
 	{
 		fwrite($new, $line);
 	}
-});
+}
+
+function checkResponse($orig, $new, $line)
+{
+	// No fucking clue why this is necessary
+	global $config;
+	global $challenge;
+	global $response;
+	global $status;
+
+	$tokens = explode(' ', $line);
+	$knownChallenge = trim($tokens[1]);
+
+	if ($challenge == $knownChallenge && hash('sha256', $challenge . $config['preSharedKey']) == $response)
+	{
+		updateStatus($status);
+	}
+	else
+	{
+		fwrite($new, $line);
+	}
+}
+
+// Remove challenges older than 60 seconds
+challenges('removeOldChallenges');
 
 if (!isset($_GET['status']) && !isset($_GET['challenge']) && !isset($_GET['response']))
 {
@@ -83,21 +101,14 @@ if (!isset($_GET['status']) && !isset($_GET['challenge']) && !isset($_GET['respo
 }
 else
 {
+	global $challenge;
+	global $response;
+	global $status;
+
 	$status = $_GET['status'];
 	$challenge = $_GET['challenge'];
 	$response = $_GET['response'];
 
-	challenges(function($orig, $new, $line) use ($config, $challenge, $response, $status) {
-		$knownChallenge = trim(explode(' ', $line)[1]);
-
-		if ($challenge == $knownChallenge && hash('sha256', $challenge . $config['preSharedKey']) == $response)
-		{
-			updateStatus($status);
-		}
-		else
-		{
-			fwrite($new, $line);
-		}
-	});
+	challenges("checkResponse");
 }
 ?>
