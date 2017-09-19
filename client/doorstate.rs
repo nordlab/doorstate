@@ -103,11 +103,11 @@ fn read_doorstate(pin: &()) -> String {
     return "offen".to_string();
 }
 
-fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) {
+fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) -> Result<(), curl::Error> {
     let mut easy = Easy::new();
     let mut dst = Vec::new();
 
-    easy.url(&baseurl).unwrap();
+    easy.url(&baseurl)?;
 
     // This scope is required to end the borrow of dst
     {
@@ -116,7 +116,7 @@ fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) {
             dst.extend_from_slice(data);
             Ok(data.len())
         }).unwrap();
-        transfer.perform().unwrap();
+        transfer.perform()?;
     }
 
     let challenge = str::from_utf8(&dst).unwrap();
@@ -138,11 +138,13 @@ fn send_doorstate(baseurl: &String, pre_shared_key: &String, status: &String) {
     url.push_str("status=");
     url.push_str(status);
 
-    easy.url(&url).unwrap();
+    easy.url(&url)?;
 
     let transfer = easy.transfer();
 
-    transfer.perform().unwrap();
+    transfer.perform()?;
+
+    Ok(())
 }
 
 #[cfg(feature = "pi")]
@@ -175,9 +177,14 @@ fn main() {
         let status_new = read_doorstate(&pin);
 
         if status_new != status_last {
-            send_doorstate(&api.url, &api.pre_shared_key, &status_new);
+            match send_doorstate(&api.url, &api.pre_shared_key, &status_new) {
+                Ok(_) => {
+                    println!("OK");
+                    status_last = status_new;
+                },
+                Err(e) => println!("Error: {}", e)
+            }
 
-            status_last = status_new;
         }
 
         if duration > time::Duration::from_millis(0) {
