@@ -15,8 +15,8 @@ Requirements
 #### Raspbian
 
 	apt-get install build-essential libssl-dev wiringpi
-	wget https://static.rust-lang.org/dist/rust-1.11.0-arm-unknown-linux-gnueabi.tar.gz
-	tar xvf rust-1.11.0-arm-unknown-linux-gnueabihf.tar.gz
+	wget https://static.rust-lang.org/dist/rust-1.20.0-arm-unknown-linux-gnueabihf.tar.gz
+	tar xvf rust-1.20.0-arm-unknown-linux-gnueabihf.tar.gz
 	cd rust-1.11.0-arm-unknown-linux-gnueabihf
 	./install.sh
 
@@ -39,3 +39,12 @@ Requirements
 	cd client
 	cargo build --release --features pi
 	cp target/release/doorstate .
+
+## Notes
+
+To simulate a non-functional network connection, port 80 was blocked via IPTables:
+
+	iptables -I OUTPUT --proto tcp --dport 80 -j REJECT
+	ip6tables -I OUTPUT --proto tcp --dport 80 -j REJECT
+
+Don't forget to flush the rules after testing! (`iptables -F OUTPUT && ip6tables -F OUTPUT`)
